@@ -2,19 +2,23 @@ import sys
 import argparse
 from pathlib import Path
 
-from live.const import Const
+from live.param import Config
 from live.log import log
 
 
 class Cmd:
     def __init__(self):
-        self.config_file = [Const.config_file]
-        self.save_dir = [Const.save_dir]
+        self._config_file = [Config.config_file]
+        self._save_dir = [Config.save_dir]
+
+        self.config_file = self._config_file[0]
+        self.save_dir = self._save_dir[0]
+
         self.cmd()
 
     def __repr__(self):
         c = self.__class__.__name__
-        string = f'{c}(config_file:{self.config_file}, save_dir: {self.save_dir})'
+        string = f'{c}(config_file:{self._config_file}, save_dir: {self._save_dir})'
         return string
 
     def cmd(self):
@@ -35,8 +39,8 @@ class Cmd:
         )
         args = vars(parser.parse_args())
 
-        self._update(self._is_exists, self.config_file, args['config'])
-        self._update(self._mkdir, self.save_dir, args['dir'])
+        self._update(self._is_exists, self._config_file, args['config'])
+        self._update(self._mkdir, self._save_dir, args['dir'])
     
     def _update(self, func, target, arg):
         if arg is not None:
