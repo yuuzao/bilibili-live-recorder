@@ -8,8 +8,8 @@ from live.log import log
 
 
 class User:
-    def __init__(self, user_info, qn=None):
-        self.qn = qn
+    def __init__(self, user_info):
+        self.qn = None
         self.live_time = None
         self.live_frequency = None
 
@@ -22,7 +22,7 @@ class User:
 
         self.api = Api()
 
-        self.parse_user_info(user_info)
+        self._update_user(user_info)
 
     def get_user_name(self):
         res = self._req(self.api.user_info)
@@ -80,18 +80,17 @@ class User:
         else:
             log.info(f"fetch live stream failed, status {res['code']}")
 
-    def parse_user_info(self, user_info):
+    def _update_user(self, user_info):
         self.live_frequency = user_info['frequency']
         self.live_time = user_info['live_time']
+        self.qn = user_info['quality']
 
-        url  = user_info['url']
-        id = self._parse_id(url)
-        if 'live.bilibili.com' in url:
-            self.mid = id
-            self.api.set_mid(id)
-        if 'space.bilibili.com' in url:
-            self.uid = id
-            self.api.set_uid(id)
+        if user_info['mid'] is not None:
+            self.mid = user_info['mid']
+            self.api.set_mid(self.mid)
+        else:
+            self.uid = user_info['uid']
+            self.api.set_uid(self.uid)
             self.get_user_name()
             self.get_room_from_uid()
 
@@ -105,10 +104,3 @@ class User:
             return {'err': True, "code": code}
 
         return {'err': False, 'res': res.json()}
-
-    @staticmethod
-    def _parse_id(url):
-        """
-        return the id of the given space url or room url.
-        """
-        return re.findall(r'/\d+', url)[0][1:]
