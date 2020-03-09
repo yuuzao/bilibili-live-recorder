@@ -2,7 +2,7 @@ from pathlib import Path
 from yarl import URL
 
 
-class Config:
+class Fpath:
     # config file path
     user_home = Path.home()
     config_file = user_home.joinpath('.config/livelist.toml')
