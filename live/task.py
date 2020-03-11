@@ -1,5 +1,3 @@
-# monitor config file
-# monitor live status
 import asyncio
 
 from live.log import log

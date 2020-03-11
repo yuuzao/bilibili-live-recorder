@@ -1,4 +1,3 @@
-import os
 import asyncio
 from yarl import URL
 

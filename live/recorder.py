@@ -1,8 +1,6 @@
 import http.client as client
-import requests
 import asyncio
 import aiohttp
-import shutil
 import os
 import time
 from yarl import URL
