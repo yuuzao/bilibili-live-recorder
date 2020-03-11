@@ -10,11 +10,13 @@ from yarl import URL
 from live.log import log
 from live.utils import header
 from live.param import Api
+from live.utils import naming
 
 class Rec:
-    def __init__(self, url, name):
+    def __init__(self, url, name, sdir):
         self.url = url
         self.name = name
+        self.file_name = naming(sdir, name, 'flv')
         self.size = 0
         self.break_warning = 0
         self.rec_on = False
@@ -27,6 +29,7 @@ class Rec:
                 log.info(f'record error, status {ret["status"]}')
             else:
                 log.info("Record ended")
+            return
     
     async def _get(self, session, url, headers):
         async with session.get(url, headers=headers) as res:
@@ -44,10 +47,10 @@ class Rec:
                     ret['err'] = True
 
             elif code == 200:
-                log.info('Start to record...')
+                log.info(f'Start to record from url [{url}]')
                 self.break_warning = 0
-                ff = open(self.name, 'wb')
-                while chunk := await res.content.read(1024):
+                ff = open(self.file_name, 'wb')
+                while chunk := await res.content.read(2048):
                     ff.write(chunk)
                     self.rec_on = True
                 ff.close()
@@ -66,12 +69,12 @@ class Rec:
                 self.break_warning += 1
                 continue
             
-            sz = os.stat(self.name).st_size / 1024
+            sz = os.stat(self.file_name).st_size / 1024
             if self.size == sz:
                 self.break_warning += 1
                 continue
             dif = sz - self.size
-            print(f'size: {round(sz/1024, 2):>8}Mb, speed: {round(dif, 2):>9} kb/s', end='\r')
+            print(f'[{self.name}], size: {round(sz/1024, 2):>8}Mb, speed: {round(dif, 2):>9} kb/s', end='\r')
 
             self.size = sz
             self.break_warning = 0
