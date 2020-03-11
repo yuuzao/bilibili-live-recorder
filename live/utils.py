@@ -1,50 +1,59 @@
 import re
 import time
+import datetime
+import toml
 import shutil
-import subprocess
+import asyncio
+import aiohttp
 import requests
-from functools import wraps
+from pathlib import Path
+
 from live.log import log
 
-import live.get_url as Live
+
+async def req(url):
+    h = header(url)
+    async with aiohttp.ClientSession() as s:
+        async with s.get(url,allow_redirects=True, headers=h) as res:
+            code = res.status
+            if code >= 400:
+                return {'err': True, 'code': code}
+            rr = await res.json()
+            return {'err': False, 'code': code, 'res': rr}
+
+def sreq(url):
+    h = header(url)
+    res = requests.get(url, headers=h)
+    code = res.status_code
+    if code >= 400:
+        return {'err': True, 'code': code}
+    rr = res.json()
+    return {'err': False, 'code':code, 'res': rr}
+
+def naming(dir, prefix, suffix):
+    ts = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+    name = prefix + ts + '.' + suffix
+
+    return dir.joinpath(name)
 
 
-def read_config(conf):
-    if not conf.exists():
-        log.error("config file does not exitsts")
-        return None
 
-    raw = conf.read_text()
-    space_ids = re.findall(r"\d+", raw)
+async def watch(self, slp, func, *args, **kwds):
+    while True:
+        await func(*args, **kwds)
+        await asyncio.sleep(slp)
+    
 
-    return space_ids
+def header(url):
+    temp = {
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+        "Accept-Encoding": "gzip, deflate",
+        "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+        "Cache-Control": "max-age=0",
+        "Connection": "keep-alive",
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.122 Safari/537.36"
+    }
 
+    temp['Host'] = url.host
 
-def parse_user(user_id):
-    user_info = Live.get_room_info(user_id)
-    if user_info is None:
-        return None
-
-    title = Live.get_room_title(user_info)
-    room_id = Live.get_room_id(user_info)
-
-    return {"user_id": user_id, "room_title": title, "room_id": room_id}
-
-
-def download(url, file):
-    c = 2
-    while c < 4:
-        log.info(f"recording to {file}")
-        with requests.get(url, stream=True) as r:
-            if r.status_code != 200:
-                log.info(f"status {r.status_code}, retrying for {c}th times")
-                c += 1
-                continue
-            with open(file, "wb") as f:
-                shutil.copyfileobj(r.raw, f)
-                log.info(f"{file} recorded")
-                log.info(f"exit with status {r.status_code}")
-                return
-
-    log.info("Max retries exceeded with url, please check you network")
-    return
+    return temp

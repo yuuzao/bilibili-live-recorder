@@ -1,16 +1,15 @@
-from threading import Thread
+import asyncio
 
-from live.task import Watcher
-from live.args import cmd
+from live.args import Cmd
+from live.task import Lives
 
 
-def main():
-    config_file = cmd()["config"]
-    cctv = Watcher(config_file)
+async def main():
+    cmd = Cmd()
+    lv = Lives(cmd.config_file, cmd.save_dir)
+    await asyncio.gather(lv.watch_config(),
+                        lv.watch_lives_staus(),
+                        lv.record())
 
-    c = Thread(target=cctv.watch_config)
-    s = Thread(target=cctv.watch_live_status)
-    l = Thread(target=cctv.watch_recorders)
-    t = Thread(target=cctv.tasks)
-    for t in [c, s, l, t]:
-        t.start()
+if __name__ == "__main__":
+    asyncio.run(main())

@@ -2,14 +2,14 @@ import sys
 import argparse
 from pathlib import Path
 
-from live.param import Config
+from live.param import Fpath
 from live.log import log
 
 
 class Cmd:
     def __init__(self):
-        self._config_file = [Config.config_file]
-        self._save_dir = [Config.save_dir]
+        self._config_file = [Fpath.config_file]
+        self._save_dir = [Fpath.save_dir]
 
         self.config_file = self._config_file[0]
         self.save_dir = self._save_dir[0]
@@ -40,7 +40,7 @@ class Cmd:
         args = vars(parser.parse_args())
 
         self._update(self._is_exists, self._config_file, args['config'])
-        self._update(self._mkdir, self._save_dir, args['dir'])
+        # self._update(self._mkdir, self._save_dir, args['dir'])
     
     def _update(self, func, target, arg):
         if arg is not None:
@@ -55,8 +55,3 @@ class Cmd:
             log.error(f'"{p}" does not exist, exiting...')
             if exit:
                 sys.exit(1)
-
-    def _mkdir(self, p):
-        if not p.exists():
-            log.info(f'creating folder at "{p}"')
-            p.mkdir(parents=True)
