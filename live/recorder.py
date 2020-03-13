@@ -55,7 +55,7 @@ class Rec:
                 self.rec_on = False
 
             else:
-                log.error(f'unknown error, status {"code"}')
+                log.error(f'unknown error, status {code}')
                 ret['err'] = True
 
             return ret
